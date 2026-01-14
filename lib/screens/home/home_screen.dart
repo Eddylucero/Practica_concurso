@@ -32,16 +32,45 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() => cargando = false);
   }
 
+  void _mostrarInfo(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Información'),
+        content: const Text(
+          'Integrantes:\n'
+          '1. Lucero Eddy\n'
+          '2. Morales Anthony',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cerrar'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final balance = ingresos - gastos;
-    final maxValor = (ingresos > gastos ? ingresos : gastos) * 1.2;
+    final double balance = ingresos - gastos;
+    final double maxValor = (ingresos > gastos ? ingresos : gastos) * 1.2;
+
+    // 🔒 NUNCA 0 y SIEMPRE double
+    final double intervalo = maxValor > 0 ? maxValor / 4 : 25.0;
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Control Financiero'),
         backgroundColor: Colors.cyan,
         foregroundColor: Colors.white,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.info_outline),
+            onPressed: () => _mostrarInfo(context),
+          ),
+        ],
       ),
       body: cargando
           ? const Center(child: CircularProgressIndicator())
@@ -100,23 +129,22 @@ class _HomeScreenState extends State<HomeScreen> {
                       child: BarChart(
                         BarChartData(
                           alignment: BarChartAlignment.spaceAround,
-                          maxY: maxValor == 0 ? 100 : maxValor,
+                          maxY: maxValor > 0 ? maxValor : 100,
                           gridData: FlGridData(show: true),
                           borderData: FlBorderData(show: false),
                           barTouchData: BarTouchData(
                             enabled: true,
                             touchTooltipData: BarTouchTooltipData(
                               tooltipBgColor: Colors.black87,
-                              getTooltipItem:
-                                  (group, groupIndex, rod, rodIndex) {
-                                    final label = group.x == 0
-                                        ? 'Ingresos'
-                                        : 'Gastos';
-                                    return BarTooltipItem(
-                                      '$label\n\$${rod.toY.toStringAsFixed(2)}',
-                                      const TextStyle(color: Colors.white),
-                                    );
-                                  },
+                              getTooltipItem: (group, _, rod, __) {
+                                final label = group.x == 0
+                                    ? 'Ingresos'
+                                    : 'Gastos';
+                                return BarTooltipItem(
+                                  '$label\n\$${rod.toY.toStringAsFixed(2)}',
+                                  const TextStyle(color: Colors.white),
+                                );
+                              },
                             ),
                           ),
                           titlesData: FlTitlesData(
@@ -129,8 +157,8 @@ class _HomeScreenState extends State<HomeScreen> {
                             leftTitles: AxisTitles(
                               sideTitles: SideTitles(
                                 showTitles: true,
-                                interval: maxValor / 4,
-                                getTitlesWidget: (value, meta) {
+                                interval: intervalo,
+                                getTitlesWidget: (value, _) {
                                   return Text(
                                     '\$${value.toInt()}',
                                     style: const TextStyle(fontSize: 10),
@@ -141,15 +169,14 @@ class _HomeScreenState extends State<HomeScreen> {
                             bottomTitles: AxisTitles(
                               sideTitles: SideTitles(
                                 showTitles: true,
-                                reservedSize: 40, // 🔥 SOLUCIÓN CLAVE
-                                getTitlesWidget: (value, meta) {
+                                reservedSize: 40,
+                                getTitlesWidget: (value, _) {
                                   return Padding(
                                     padding: const EdgeInsets.only(top: 10),
                                     child: Text(
                                       value.toInt() == 0
                                           ? 'Ingresos'
                                           : 'Gastos',
-                                      textAlign: TextAlign.center,
                                       style: const TextStyle(
                                         fontSize: 13,
                                         fontWeight: FontWeight.bold,
