@@ -61,4 +61,24 @@ class MovementRepository {
 
     return response.map((e) => MovementModel.fromMap(e)).toList();
   }
+
+  // Total de ingresos
+  Future<double> getTotalIngresos() async {
+    final db = await database.db;
+    final result = await db.rawQuery(
+      "SELECT SUM(monto) as total FROM $tableName WHERE tipo = 'INGRESO'",
+    );
+
+    return (result.first['total'] as num?)?.toDouble() ?? 0.0;
+  }
+
+  // Total de gastos
+  Future<double> getTotalGastos() async {
+    final db = await database.db;
+    final result = await db.rawQuery(
+      "SELECT SUM(monto) as total FROM $tableName WHERE tipo = 'GASTO'",
+    );
+
+    return (result.first['total'] as num?)?.toDouble() ?? 0.0;
+  }
 }
